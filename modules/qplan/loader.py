@@ -1,11 +1,5 @@
 import inspect
-
-class Task:
-    def __init__(task, cls):
-        task.cls = cls
-        task.name = cls.__qualname__
-        task.deps = set()       # set of task.name
-        task.waiters = set()    # set of task.name
+from .task import *
 
 def dir_classes(cls):
     for member_name in dir(cls):
@@ -17,7 +11,8 @@ def default_validate(task):
     pass
 
 def get_tasks(cls, validate = default_validate):
-    def recursive_get_tasks(cls, tasks, validate):
+    tasks = {}
+    def recursive_get_tasks(cls):
         task = tasks.get(cls.__qualname__)
         if task:
             return task
@@ -26,12 +21,12 @@ def get_tasks(cls, validate = default_validate):
             task = Task(cls)
             tasks[task.name] = task
             for member in dir_classes(cls):
-                child_task = recursive_get_tasks(member, tasks, validate)
+                child_task = recursive_get_tasks(member)
                 task.deps.add(child_task.name)
             if hasattr(cls, 'deps'):
                 deps = cls.deps()
                 for dep_cls in deps:
-                    dep_task = recursive_get_tasks(dep_cls, tasks, validate)
+                    dep_task = recursive_get_tasks(dep_cls)
                     task.deps.add(dep_task.name)
             return task
     def update_waiters(tasks):
@@ -40,7 +35,6 @@ def get_tasks(cls, validate = default_validate):
                 dep_task = tasks[dep_name]
                 dep_task.waiters.add(task.name)
 
-    tasks = {}
-    recursive_get_tasks(cls, tasks, validate)
+    recursive_get_tasks(cls)
     update_waiters(tasks)
     return tasks

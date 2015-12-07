@@ -36,13 +36,9 @@ if __name__ == "__main__":
                 print('    ' + waiter_name)
     
     tasks = qplan.get_tasks(project)
-    print_tasks(tasks)
-    
-    (waiting, ready, complete, all_needed) = qplan.calc_needed_tasks(tasks, tasks[project.__qualname__])
-    print(complete)
-    print(ready)
-    print(waiting)
-    print(all_needed)
+    schedule_items = qplan.schedule_naively(tasks, project)
+    for item in schedule_items:
+        print('{item.task.name}: {item.start_time} - {item.end_time}'.format(**locals()))
 
 
 
