@@ -5,6 +5,7 @@ class ScheduleItem:
         item.task = task
         item.start_time = None
         item.end_time = None
+        item.pred_task = None
         item.resource = None
 
 def calc_needed_tasks(tasks, target_task):
@@ -31,9 +32,13 @@ def schedule_naively(tasks, target):
             state.deps_done = set()     # set of task.name
     def calc_start_time(task):
         start_time = 0
-        for dep in task.deps:
-            start_time = max(start_time, tasks[dep]._item.end_time)
-        return start_time
+        pred_task = None
+        for dep_name in task.deps:
+            dep_task = tasks[dep_name]
+            if start_time < dep_task._item.end_time:
+                start_time = dep_task._item.end_time
+                pred_task = dep_task
+        return (start_time, pred_task)
     def calc_duration(task):
         if hasattr(task.cls, 'estimate'):
             return task.cls.estimate
@@ -52,7 +57,7 @@ def schedule_naively(tasks, target):
     while len(ready):
         (_, task) = ready.popitem()
         duration = calc_duration(task)
-        task._item.start_time = calc_start_time(task)
+        (task._item.start_time, task._item.pred_task) = calc_start_time(task)
         task._item.end_time = task._item.start_time + duration
 
         for waiter_name in task.waiters:
