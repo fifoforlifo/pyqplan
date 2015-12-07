@@ -34,11 +34,11 @@ if __name__ == "__main__":
             print('  waiters:')
             for waiter_name in task.waiters:
                 print('    ' + waiter_name)
-    
+
     tasks = qplan.get_tasks(project)
     schedule_items = qplan.schedule_naively(tasks, project)
     for item in schedule_items:
         print('{item.task.name}: {item.start_time} - {item.end_time}'.format(**locals()))
 
-
+    qplan.plot_gantt(schedule_items)
 
