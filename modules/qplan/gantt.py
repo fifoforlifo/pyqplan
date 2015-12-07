@@ -30,6 +30,7 @@ def plot_gantt(schedule_items, critical_path):
                 item.start_time,
                 y_pos[name_to_idx[item.task.name]],
                 y_pos[name_to_idx[item.pred_task.name]],
+                colors = bar_color,
                 linestyles='dotted')
 
     plt.gcf().tight_layout()
