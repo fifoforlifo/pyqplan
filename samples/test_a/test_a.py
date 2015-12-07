@@ -26,8 +26,12 @@ if __name__ == "__main__":
 
     tasks = qplan.get_tasks(project)
     schedule_items = qplan.schedule_naively(tasks, project)
-    for item in schedule_items:
-        print('{item.task.name}: {item.start_time} - {item.end_time}'.format(**locals()))
+    critical_path = qplan.calc_critical_path(schedule_items, project)
+    critical_path_names = set([item.task.name for item in critical_path])
+    print('critical_path = ', [item.task.name for item in critical_path])
+    for item in qplan.schedule_sorted_by_time(schedule_items):
+        is_crit = '*' if item.task.name in critical_path_names else ' '
+        print('{is_crit} {item.task.name:39}: {item.start_time:5} - {item.end_time:5}'.format(**locals()))
 
-    qplan.plot_gantt(schedule_items)
+    qplan.plot_gantt(schedule_items, critical_path)
 

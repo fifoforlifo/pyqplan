@@ -72,15 +72,29 @@ def schedule_naively(tasks, target):
     if len(waiting):
         raise Exception()
 
-    items = []
+    schedule_items = {}
     for task in all_needed.values():
-        items.append(task._item)
+        schedule_items[task.name] = task._item
         del task._state
         del task._item
+    return schedule_items
 
-    return sorted(items, key = lambda item: item.start_time)
+
+def schedule_sorted_by_time(schedule_items):
+    return sorted(schedule_items.values(), key = lambda item: item.start_time)
 
 
+def calc_critical_path(schedule_items, target):
+    if not isinstance(target, ScheduleItem):
+        target = schedule_items[target.__qualname__]
+
+    critical_path = [target]
+    while target.pred_task:
+        pred_item = schedule_items[target.pred_task.name]
+        critical_path.append(pred_item)
+        target = pred_item
+    critical_path.reverse()
+    return critical_path
 
 
 
