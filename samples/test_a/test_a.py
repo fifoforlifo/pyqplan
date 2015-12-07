@@ -24,17 +24,6 @@ if __name__ == "__main__":
     sys.path.append('../../modules')
     import qplan
 
-    def print_tasks(tasks):
-        for name in sorted(tasks.keys()):
-            task = tasks[name]
-            print('{0} :'.format(name))
-            print('  deps:')
-            for dep_name in task.deps:
-                print('    ' + dep_name)
-            print('  waiters:')
-            for waiter_name in task.waiters:
-                print('    ' + waiter_name)
-
     tasks = qplan.get_tasks(project)
     schedule_items = qplan.schedule_naively(tasks, project)
     for item in schedule_items:
