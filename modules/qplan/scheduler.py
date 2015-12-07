@@ -29,12 +29,10 @@ def schedule_naively(tasks, target):
     class SchedState:
         def __init__(state):
             state.deps_done = set()     # set of task.name
-            state.start_time = None
-            state.end_time = None
     def calc_start_time(task):
         start_time = 0
         for dep in task.deps:
-            start_time = max(start_time, tasks[dep]._state.end_time)
+            start_time = max(start_time, tasks[dep]._item.end_time)
         return start_time
     def calc_duration(task):
         if hasattr(task.cls, 'estimate'):
@@ -47,14 +45,15 @@ def schedule_naively(tasks, target):
         target = tasks[target.__qualname__]
     (waiting, ready, complete, all_needed) = calc_needed_tasks(tasks, target)
 
-    for task in tasks.values():
+    for task in all_needed.values():
+        task._item = ScheduleItem(task)
         task._state = SchedState()
 
     while len(ready):
         (_, task) = ready.popitem()
         duration = calc_duration(task)
-        task._state.start_time = calc_start_time(task)
-        task._state.end_time = task._state.start_time + duration
+        task._item.start_time = calc_start_time(task)
+        task._item.end_time = task._item.start_time + duration
 
         for waiter_name in task.waiters:
             waiter_task = tasks[waiter_name]
@@ -70,11 +69,9 @@ def schedule_naively(tasks, target):
 
     items = []
     for task in all_needed.values():
-        item = ScheduleItem(task)
-        item.start_time = task._state.start_time
-        item.end_time = task._state.end_time
-        items.append(item)
+        items.append(task._item)
         del task._state
+        del task._item
 
     return sorted(items, key = lambda item: item.start_time)
 
