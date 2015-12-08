@@ -16,7 +16,7 @@ def plot_gantt(schedule_items, critical_path):
     ax = fig.add_subplot(111)
 
     # Format the y-axis.
-    y_pos = np.arange(len(ylabels))
+    y_pos = np.arange(len(ylabels)) * 0.5
     ax.set_yticks(y_pos)
     ax.set_yticklabels(ylabels)
     ax.invert_yaxis()
@@ -26,6 +26,7 @@ def plot_gantt(schedule_items, critical_path):
         item = items[ii]
         bar_color = 'red' if item.task.name in crit_path_names else 'blue'
         ax.barh(y_pos[ii], item.end_time - item.start_time, left=item.start_time, height=0.3, align='center', color=bar_color, alpha=0.75)
+        ax.barh(y_pos[ii], item.start_time - item.child_start_time, left=item.child_start_time, height=0.3, align='center', fill=False, alpha=0.75, linestyle='dashed')
         for dep_name in item.task.deps:
             dep_item = schedule_items[dep_name]
             dep_color = 'red' if dep_name == item.pred_task.name else 'blue'

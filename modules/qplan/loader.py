@@ -22,6 +22,7 @@ def get_tasks(cls, validate = default_validate):
             tasks[task.name] = task
             for member in dir_classes(cls):
                 child_task = recursive_get_tasks(member)
+                task.children.add(child_task.name)
                 task.deps.add(child_task.name)
             if hasattr(cls, 'deps'):
                 deps = cls.deps()
