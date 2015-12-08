@@ -241,4 +241,6 @@ def print_stats(schedule):
         res_items = schedule.items_by_resource[res_name]
         busy_pct = 100 * sum([item.duration for item in res_items]) / schedule.duration
         print('{res_name:16} : {busy_pct:6.3} %'.format(**locals()))
-
+    res_name = 'TOTAL'
+    busy_pct = 100 * sum([item.duration for item in schedule.items.values()]) / (schedule.duration * len(schedule.items_by_resource))
+    print('{res_name:16} : {busy_pct:6.3} %'.format(**locals()))
