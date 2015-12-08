@@ -33,12 +33,11 @@ if __name__ == "__main__":
     import qplan
 
     tasks = qplan.get_tasks(project)
-    #schedule_items = qplan.create_ideal_schedule(tasks, project)
-    schedule_items = qplan.create_schedule_with_resources(resources, tasks, project)
-    critical_path = qplan.calc_critical_path(schedule_items, project)
-    print('critical_path = ', [item.task.name for item in critical_path])
+    #schedule = qplan.create_ideal_schedule(tasks, project)
+    schedule = qplan.create_schedule_with_resources(resources, tasks, project)
+    print('critical_path = ', [item.task.name for item in schedule.critical_path])
 
-    qplan.print_stats(schedule_items, project)
-    #qplan.plot_gantt_by_task(schedule_items, critical_path)
-    qplan.plot_gantt_by_resource(resources, schedule_items, critical_path)
+    qplan.print_stats(schedule)
+    #qplan.plot_gantt_by_task(schedule)
+    qplan.plot_gantt_by_resource(schedule)
 
