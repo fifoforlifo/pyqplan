@@ -14,3 +14,4 @@ class ScheduleItem:
         item.resource = None
         item.duration = _get_duration(task)
         item.total_effort = None
+        item.who = None
