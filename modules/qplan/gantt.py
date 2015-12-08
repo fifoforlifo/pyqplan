@@ -1,3 +1,4 @@
+from .schedule_item import *
 from .scheduler import *
 import numpy as np
 import matplotlib.pyplot as plt

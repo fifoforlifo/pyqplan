@@ -1,12 +1,5 @@
 from .task import *
-
-class ScheduleItem:
-    def __init__(item, task):
-        item.task = task
-        item.start_time = None
-        item.end_time = None
-        item.pred_task = None
-        item.resource = None
+from .schedule_item import *
 
 def calc_needed_tasks(tasks, target_task):
     waiting, ready, complete, all_needed = {}, {}, {}, {}
