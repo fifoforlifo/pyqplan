@@ -1,5 +1,6 @@
 from .task import *
 from .schedule_item import *
+from collections import deque
 
 
 def calc_critical_path(schedule_items, target):
@@ -119,25 +120,24 @@ def create_schedule_with_resources(resources, tasks, target):
     class SchedState:
         def __init__(state):
             state.deps_done = set()     # set of task.name
-    # init next-available times
-    res_end_time = {}
+    class ResourceState:
+        def __init__(res_state):
+            res_state.end_time = 0
+            res_state.last_task_name = None
+
+    res_states = {}
     for res_name in resources:
-        res_end_time[res_name] = 0
-    def select_ready_task(ready):
-        def select_task():
-            ready_tasks = [tasks[task_name] for task_name in sorted(ready.keys())]
-            for task in ready_tasks:
-                if len(task.who):
-                    del ready[task.name]
-                    return task
-            return ready.pop(ready_tasks[0].name)
-        task = select_task()
+        res_states[res_name] = ResourceState()
+    def select_resource(task):
         available_resources = task.who
         if not len(available_resources):
             available_resources = sorted(resources.keys())
-
-        min_res_name = min(sorted(available_resources), key=lambda res_name: res_end_time[res_name])
-        return (min_res_name, task)
+        available_resources = sorted(available_resources)
+        for res_name in available_resources:
+            if res_states[res_name].last_task_name in task.deps:
+                return res_name
+        min_res_name = min(available_resources, key=lambda res_name: res_states[res_name].end_time)
+        return min_res_name
 
     def calc_start_time(res_name, task):
         start_time = 0
@@ -174,25 +174,29 @@ def create_schedule_with_resources(resources, tasks, target):
     if not isinstance(target, Task):
         target = tasks[target.__qualname__]
     (waiting, ready, complete, all_needed) = calc_needed_tasks(tasks, target)
+    ready = deque(ready)
 
     for task in all_needed.values():
         task._item = ScheduleItem(task)
         task._state = SchedState()
 
     while len(ready):
-        (res_name, task) = select_ready_task(ready)
+        task = tasks[ready.popleft()]
+        res_name = select_resource(task)
+
         (task._item.start_time, task._item.pred_task) = calc_start_time(res_name, task)
         task._item.end_time = task._item.start_time + task._item.duration
         task._item.who = res_name
+        res_states[res_name].last_task_name = task.name
         if task._item.duration:
-            res_end_time[res_name] = task._item.end_time
+            res_states[res_name].end_time = task._item.end_time
 
         for waiter_name in sorted(task.waiters):
             waiter_task = tasks[waiter_name]
             waiter_task._state.deps_done.add(task.name)
             if len(waiter_task.deps) == len(waiter_task._state.deps_done):
                 del waiting[waiter_name]
-                ready[waiter_name] = waiter_task
+                ready.append(waiter_name)
 
     for task in all_needed.values():
         calc_child_start_time(task)

@@ -7,10 +7,10 @@ def dir_classes(cls):
         if (not member_name.startswith('_')) and inspect.isclass(member):
             yield member
 
-def default_validate(task):
-    pass
+def default_predicate(task):
+    return True
 
-def get_tasks(cls, validate = default_validate):
+def get_tasks(cls, predicate = default_predicate):
     tasks = {}
     def recursive_get_tasks(cls):
         task = tasks.get(cls.__qualname__)
@@ -19,7 +19,8 @@ def get_tasks(cls, validate = default_validate):
         else:
             if hasattr(cls, 'ignore') and cls.ignore:
                 return None
-            validate(cls)
+            if not predicate(cls):
+                return None
             task = Task(cls)
             tasks[task.name] = task
             for member in dir_classes(cls):
