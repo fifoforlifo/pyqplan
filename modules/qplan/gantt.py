@@ -4,7 +4,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_gantt_by_task(schedule):
+def _calc_file_name(schedule, filename, fileext):
+    if filename:
+        return filename
+    if fileext:
+        if fileext[0] != '.':
+            fileext = '.' + fileext
+    else:
+        fileext = '.png'
+
+    if len(schedule.items_by_resource):
+        return 'Res.' + schedule.target.task.name + fileext
+    else:
+        return 'Task.' + schedule.target.task.name + fileext
+
+def plot_gantt_by_task(schedule, filename=None, fileext=None):
     crit_path_names = set([item.task.name for item in schedule.critical_path])
 
     items = schedule_sorted_by_time(schedule.items)
@@ -46,11 +60,11 @@ def plot_gantt_by_task(schedule):
 
 
     plt.gcf().tight_layout()
-    plt.show()
+    image_filename = _calc_file_name(schedule, filename, fileext)
+    plt.savefig(image_filename)
 
 
-
-def plot_gantt_by_resource(schedule):
+def plot_gantt_by_resource(schedule, filename=None, fileext=None):
     crit_path_names = set([item.task.name for item in schedule.critical_path])
 
     res_names = list(sorted(schedule.items_by_resource.keys()))
@@ -92,4 +106,5 @@ def plot_gantt_by_resource(schedule):
 
 
     plt.gcf().tight_layout()
-    plt.show()
+    image_filename = _calc_file_name(schedule, filename, fileext)
+    plt.savefig(image_filename)

@@ -17,18 +17,22 @@ def get_tasks(cls, validate = default_validate):
         if task:
             return task
         else:
+            if hasattr(cls, 'ignore') and cls.ignore:
+                return None
             validate(cls)
             task = Task(cls)
             tasks[task.name] = task
             for member in dir_classes(cls):
                 child_task = recursive_get_tasks(member)
-                task.children.add(child_task.name)
-                task.deps.add(child_task.name)
+                if child_task:
+                    task.children.add(child_task.name)
+                    task.deps.add(child_task.name)
             if hasattr(cls, 'deps'):
                 deps = cls.deps()
                 for dep_cls in deps:
                     dep_task = recursive_get_tasks(dep_cls)
-                    task.deps.add(dep_task.name)
+                    if dep_task:
+                        task.deps.add(dep_task.name)
             return task
     def update_waiters(tasks):
         for task in tasks.values():

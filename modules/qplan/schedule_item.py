@@ -14,7 +14,7 @@ class ScheduleItem:
         item.resource = None
         item.duration = _get_duration(task)
         item.total_effort = None
-        item.who = None
+        item.who = ''
 
 class Schedule:
     def __init__(schedule, target, schedule_items, critical_path, items_by_resource):

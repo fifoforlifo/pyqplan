@@ -237,10 +237,11 @@ def print_stats(schedule):
         print('{is_crit} {item.task.name:39}: {item.who:16} {item.start_time:5} - {item.end_time:5}   {item.total_effort:6}'.format(**locals()))
     print('=' * len(header))
 
-    for res_name in sorted(schedule.items_by_resource.keys()):
-        res_items = schedule.items_by_resource[res_name]
-        busy_pct = 100 * sum([item.duration for item in res_items]) / schedule.duration
-        print('{res_name:16} : {busy_pct:6.3} %'.format(**locals()))
-    res_name = 'TOTAL'
-    busy_pct = 100 * sum([item.duration for item in schedule.items.values()]) / (schedule.duration * len(schedule.items_by_resource))
-    print('{res_name:16} : {busy_pct:6.3} %'.format(**locals()))
+    if len(schedule.items_by_resource):
+        for res_name in sorted(schedule.items_by_resource.keys()):
+            res_items = schedule.items_by_resource[res_name]
+            busy_pct = 100 * sum([item.duration for item in res_items]) / schedule.duration
+            print('{res_name:16} : {busy_pct:8.6} %'.format(**locals()))
+        res_name = 'TOTAL'
+        busy_pct = 100 * sum([item.duration for item in schedule.items.values()]) / (schedule.duration * max(1, len(schedule.items_by_resource)))
+        print('{res_name:16} : {busy_pct:8.6} %'.format(**locals()))
