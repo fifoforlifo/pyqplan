@@ -13,7 +13,6 @@ class project:
 
     class task_d:
         class task_b:
-            title = "Task B"
             estimate = 4
             def deps(): return [project.task_a, other.task_d]
 
@@ -25,6 +24,9 @@ class other:
     class task_d:
         class task_e:
             estimate = 1
+        class task_f:
+            estimate = 4
+            def deps(): return [project.task_a]
 
 
 if __name__ == "__main__":

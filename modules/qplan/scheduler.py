@@ -128,26 +128,49 @@ def create_schedule_with_resources(resources, tasks, target):
     res_states = {}
     for res_name in resources:
         res_states[res_name] = ResourceState()
+
+    if not isinstance(target, Task):
+        target = tasks[target.__qualname__]
+    (waiting, ready, complete, all_needed) = calc_needed_tasks(tasks, target)
+    ready = deque(ready.keys())
+
     def select_resource(task):
         available_resources = task.who
         if not len(available_resources):
             available_resources = sorted(resources.keys())
         available_resources = sorted(available_resources)
+        chained_candidates = []
         for res_name in available_resources:
             if res_states[res_name].last_task_name in task.deps:
-                return res_name
-        min_res_name = min(available_resources, key=lambda res_name: res_states[res_name].end_time)
+                chained_candidates.append(res_name)
+        if len(chained_candidates):
+            available_resources = chained_candidates
+        min_res_name = min(available_resources, key=lambda res_name: (res_states[res_name].end_time, not res_states[res_name].last_task_name))
         return min_res_name
+    def update_waiters(task):
+        newly_ready = []
+        for waiter_name in sorted(task.waiters):
+            waiter_task = tasks[waiter_name]
+            waiter_task._state.deps_done.add(task.name)
+            if len(waiter_task.deps) == len(waiter_task._state.deps_done):
+                del waiting[waiter_name]
+                newly_ready.append(waiter_name)
+                # calculate predecessor task
+                pred_task_name = max(waiter_task.deps, key=lambda dep_name: tasks[dep_name]._item.end_time)
+                waiter_task._item.pred_task = tasks[pred_task_name]
+        for task_name in sorted(newly_ready, key=lambda ready_name: -tasks[ready_name]._item.duration):
+            ready.append(task_name)
 
+    def pred_end_time(task):
+        if task._item.pred_task:
+            return task._item.pred_task._item.end_time
+        return 0
+    def calc_earliest_schedulable_time():
+        ready_tasks = [tasks[ready_name] for ready_name in ready]
+        min_task = min(ready_tasks, key=lambda task: pred_end_time(task))
+        return pred_end_time(min_task)
     def calc_start_time(res_name, task):
-        start_time = 0
-        pred_task = None
-        for dep_name in sorted(task.deps):
-            dep_task = tasks[dep_name]
-            if start_time < dep_task._item.end_time:
-                start_time = dep_task._item.end_time
-                pred_task = dep_task
-        return (start_time, pred_task)
+        return max(res_states[res_name].end_time, pred_end_time(task))
     def calc_child_start_time(target_task):
         def calc_recursive(task):
             if task._item.child_start_time != None:
@@ -171,32 +194,26 @@ def create_schedule_with_resources(resources, tasks, target):
                 return total
         target_task._item.total_effort = calc_recursive(target_task)
 
-    if not isinstance(target, Task):
-        target = tasks[target.__qualname__]
-    (waiting, ready, complete, all_needed) = calc_needed_tasks(tasks, target)
-    ready = deque(ready)
-
     for task in all_needed.values():
         task._item = ScheduleItem(task)
         task._state = SchedState()
 
     while len(ready):
+        earliest_schedulable_time = calc_earliest_schedulable_time()
+        for res_name in res_states:
+            res_states[res_name].end_time = max(earliest_schedulable_time, res_states[res_name].end_time)
+    
         task = tasks[ready.popleft()]
         res_name = select_resource(task)
 
-        (task._item.start_time, task._item.pred_task) = calc_start_time(res_name, task)
+        task._item.start_time = calc_start_time(res_name, task)
         task._item.end_time = task._item.start_time + task._item.duration
         task._item.who = res_name
-        res_states[res_name].last_task_name = task.name
         if task._item.duration:
+            res_states[res_name].last_task_name = task.name
             res_states[res_name].end_time = task._item.end_time
 
-        for waiter_name in sorted(task.waiters):
-            waiter_task = tasks[waiter_name]
-            waiter_task._state.deps_done.add(task.name)
-            if len(waiter_task.deps) == len(waiter_task._state.deps_done):
-                del waiting[waiter_name]
-                ready.append(waiter_name)
+        update_waiters(task)
 
     for task in all_needed.values():
         calc_child_start_time(task)
