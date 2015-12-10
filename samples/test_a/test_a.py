@@ -42,5 +42,5 @@ if __name__ == "__main__":
     tasks = qplan.get_tasks(project)
     schedule = qplan.create_schedule_with_resources(resources, tasks, project)
     qplan.print_stats(schedule)
-    qplan.plot_gantt_by_resource(schedule)
+    qplan.plot_timeline_by_resource(schedule, task_labels=True)
 
