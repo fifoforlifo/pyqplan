@@ -5,7 +5,6 @@ class ScheduleItem:
         item.end_time = None
         item.child_start_time = None
         item.pred_task = None
-        item.resource = None
         item.duration = task.duration
         item.total_effort = None
         item.who = ''

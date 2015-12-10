@@ -10,6 +10,7 @@ class project:
 
     class task_a:
         estimate = 8
+        desc = '''Common work.'''
 
     class task_d:
         class task_b:
@@ -38,9 +39,11 @@ if __name__ == "__main__":
     schedule = qplan.create_ideal_schedule(tasks, project)
     qplan.print_stats(schedule)
     qplan.plot_gantt_by_task(schedule)
+    qplan.print_csv(schedule)
 
     tasks = qplan.get_tasks(project)
     schedule = qplan.create_schedule_with_resources(resources, tasks, project)
     qplan.print_stats(schedule)
     qplan.plot_timeline_by_resource(schedule, task_labels=True)
+    qplan.print_csv(schedule)
 
