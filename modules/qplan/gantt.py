@@ -96,18 +96,19 @@ def plot_timeline_by_resource(schedule, task_labels=True, filename=None, fileext
         for dep_name in item.task.deps:
             dep_item = schedule.items[dep_name]
             dep_color = 'red' if dep_name == item.pred_task.name else 'blue'
-            plt.vlines(
-                item.start_time,
-                y_pos[name_to_yposidx[item.who]],
-                y_pos[name_to_yposidx[dep_item.who]],
-                colors = dep_color,
-                linestyles='dotted')
-            plt.hlines(
-                y_pos[name_to_yposidx[dep_item.who]],
-                dep_item.end_time,
-                item.start_time,
-                colors = dep_color,
-                linestyles='dotted')
+            if item.who != dep_item.who:
+                plt.vlines(
+                    item.start_time,
+                    y_pos[name_to_yposidx[item.who]],
+                    y_pos[name_to_yposidx[dep_item.who]],
+                    colors = dep_color,
+                    linestyles='dotted')
+                plt.hlines(
+                    y_pos[name_to_yposidx[dep_item.who]],
+                    dep_item.end_time,
+                    item.start_time,
+                    colors = dep_color,
+                    linestyles='dotted')
         # Plot task labels.
         if task_labels:
             item_mid_time = (item.start_time + item.end_time) / 2
