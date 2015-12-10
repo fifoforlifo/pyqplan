@@ -124,6 +124,8 @@ def create_schedule_with_resources(resources, tasks, target):
         def __init__(res_state):
             res_state.end_time = 0
             res_state.last_task_name = None
+    def sorted_ready_task_names(ready_task_names):
+        return sorted(ready_task_names, key=lambda ready_name: -tasks[ready_name].duration)
 
     res_states = {}
     for res_name in resources:
@@ -132,20 +134,23 @@ def create_schedule_with_resources(resources, tasks, target):
     if not isinstance(target, Task):
         target = tasks[target.__qualname__]
     (waiting, ready, complete, all_needed) = calc_needed_tasks(tasks, target)
-    ready = deque(ready.keys())
+    ready = deque(sorted_ready_task_names(ready.keys()))
 
+    def calc_chained_candidates(task):
+        chained_candidates = []
+        for res_name in resources.keys():
+            if res_states[res_name].last_task_name in task.deps:
+                chained_candidates.append(res_name)
+        return chained_candidates
     def select_resource(task):
         available_resources = task.who
         if not len(available_resources):
-            available_resources = sorted(resources.keys())
+            available_resources = calc_chained_candidates(task)
+            if not len(available_resources):
+                available_resources = resources.keys()
         available_resources = sorted(available_resources)
-        chained_candidates = []
-        for res_name in available_resources:
-            if res_states[res_name].last_task_name in task.deps:
-                chained_candidates.append(res_name)
-        if len(chained_candidates):
-            available_resources = chained_candidates
-        min_res_name = min(available_resources, key=lambda res_name: (res_states[res_name].end_time, not res_states[res_name].last_task_name))
+        #min_res_name = min(available_resources, key=lambda res_name: (res_states[res_name].end_time, not res_states[res_name].last_task_name, res_name))
+        min_res_name = min(available_resources, key=lambda res_name: (res_states[res_name].end_time, res_name))
         return min_res_name
     def update_waiters(task):
         newly_ready = []
@@ -158,7 +163,7 @@ def create_schedule_with_resources(resources, tasks, target):
                 # calculate predecessor task
                 pred_task_name = max(waiter_task.deps, key=lambda dep_name: tasks[dep_name]._item.end_time)
                 waiter_task._item.pred_task = tasks[pred_task_name]
-        for task_name in sorted(newly_ready, key=lambda ready_name: -tasks[ready_name]._item.duration):
+        for task_name in sorted_ready_task_names(newly_ready):
             ready.append(task_name)
 
     def pred_end_time(task):
@@ -246,7 +251,7 @@ def print_stats(schedule):
         start = 'start'
         end = 'end'
         effort = 'effort'
-        header = '  {task_name:39}: {who:16} {start:5} - {end:>5}   {effort:6}'.format(**locals())
+        header = '  {task_name:80}: {who:16} {start:5} - {end:>5}   {effort:6}'.format(**locals())
         return header
 
     header = calc_header()
@@ -255,7 +260,7 @@ def print_stats(schedule):
     print('=' * len(header))
     for item in schedule_sorted_by_time(schedule.items):
         is_crit = '*' if item.task.name in critical_path_names else ' '
-        print('{is_crit} {item.task.name:39}: {item.who:16} {item.start_time:5} - {item.end_time:5}   {item.total_effort:6}'.format(**locals()))
+        print('{is_crit} {item.task.name:80}: {item.who:16} {item.start_time:5} - {item.end_time:5}   {item.total_effort:6}'.format(**locals()))
     print('=' * len(header))
 
     if len(schedule.items_by_resource):
