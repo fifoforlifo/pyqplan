@@ -16,3 +16,4 @@ class Schedule:
         schedule.critical_path = critical_path
         schedule.items_by_resource = items_by_resource
         schedule.duration = schedule.target.end_time
+        schedule.outdir = None

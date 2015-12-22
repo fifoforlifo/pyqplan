@@ -1,4 +1,5 @@
 *.pyc
 **/*.pyc
-samples/**/*.png
-samples/**/*.csv
+**/**/_out/*.csv
+**/**/_out/*.png
+**/Thumbs.db

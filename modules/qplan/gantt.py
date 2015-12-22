@@ -1,24 +1,37 @@
+import os
+from .util import *
 from .schedule_item import *
 from .scheduler import *
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-def _calc_file_name(schedule, filename, fileext):
-    if filename:
+def _calc_filepath(schedule, dirname, filename, fileext):
+    def calc_filename(filename, fileext):
+        if filename:
+            return filename
+        if fileext:
+            if fileext[0] != '.':
+                fileext = '.' + fileext
+        else:
+            fileext = '.png'
+
+        if len(schedule.items_by_resource):
+            return 'Res.' + schedule.target.task.name + fileext
+        else:
+            return 'Task.' + schedule.target.task.name + fileext
+
+    filename = calc_filename(filename, fileext)
+    dirname = dirname or schedule.outdir
+    if dirname:
+        if os.path.isabs(filename):
+            raise Exception('Cannot apply dirname to absolute filename: {0}, {1}'.format(dirname, filename))
+        return os.path.join(dirname, filename)
+    else:
         return filename
-    if fileext:
-        if fileext[0] != '.':
-            fileext = '.' + fileext
-    else:
-        fileext = '.png'
 
-    if len(schedule.items_by_resource):
-        return 'Res.' + schedule.target.task.name + fileext
-    else:
-        return 'Task.' + schedule.target.task.name + fileext
 
-def plot_gantt_by_task(schedule, filename=None, fileext=None):
+def plot_gantt_by_task(schedule, dirname=None, filename=None, fileext=None):
     crit_path_names = set([item.task.name for item in schedule.critical_path])
 
     items = schedule_sorted_by_time(schedule.items)
@@ -28,6 +41,8 @@ def plot_gantt_by_task(schedule, filename=None, fileext=None):
         name_to_yposidx[items[ii].task.name] = ii
 
     fig = plt.figure()
+    fig_size_inches = fig.get_size_inches()
+    fig.set_size_inches(2 + schedule.target.end_time * 0.25, fig_size_inches[1])
     ax = fig.add_subplot(111)
 
     # Format the y-axis.
@@ -60,11 +75,12 @@ def plot_gantt_by_task(schedule, filename=None, fileext=None):
 
 
     plt.gcf().tight_layout()
-    image_filename = _calc_file_name(schedule, filename, fileext)
-    plt.savefig(image_filename)
+    image_filepath = _calc_filepath(schedule, dirname, filename, fileext)
+    ensure_dir_for_path(image_filepath)
+    plt.savefig(image_filepath)
 
 
-def plot_timeline_by_resource(schedule, task_labels=True, filename=None, fileext=None):
+def plot_timeline_by_resource(schedule, task_labels=True, dirname=None, filename=None, fileext=None):
     crit_path_names = set([item.task.name for item in schedule.critical_path])
 
     res_names = list(sorted(schedule.items_by_resource.keys()))
@@ -127,5 +143,6 @@ def plot_timeline_by_resource(schedule, task_labels=True, filename=None, fileext
 
 
     plt.gcf().tight_layout()
-    image_filename = _calc_file_name(schedule, filename, fileext)
-    plt.savefig(image_filename)
+    image_filepath = _calc_filepath(schedule, dirname, filename, fileext)
+    ensure_dir_for_path(image_filepath)
+    plt.savefig(image_filepath)
